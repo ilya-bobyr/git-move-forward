@@ -26,6 +26,7 @@ data BranchInfo = BranchInfo
     branchInfoHash :: !Text,
     branchInfoUpstream :: !(Maybe UpstreamInfo)
   }
+  deriving (Eq, Show)
 
 branchInfoParser :: Parser BranchInfo
 branchInfoParser = do

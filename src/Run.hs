@@ -14,6 +14,7 @@ import GitOutputParser
         branchInfoName,
         branchInfoUpstream
       ),
+    UpstreamInfo (uiName),
     branchInfoParser,
   )
 import Import
@@ -44,7 +45,9 @@ moveForward
       optionsForceMoveMain = forceMoveMain,
       optionsCheckoutBranch = checkoutBranch
     } = do
-    (branches, currentBranch) <- getBranches (== main)
+    let targetUpstream = upstream <> "/" <> main
+
+    (branches, currentBranch) <- getBranches (== main) targetUpstream
 
     printf "git-move-forward: Just blindly rebasing...\n"
     printf "\n"
@@ -54,7 +57,8 @@ moveForward
       else do
         printf "=== Going to process these branches: \n"
         mapM_ (printf ("  " % s % "\n")) branches
-        printf "\n"
+
+    printf "\n"
 
     forM_ branches \branch -> do
       procs "git" ["checkout", branch] mempty
@@ -70,7 +74,10 @@ moveForward
       -- Entering a detached state, in case we are currently on `main`, before
       -- we force update it.
       procs "git" ["checkout", "--detach", main] mempty
-      procs "git" ["branch", "-f", main, format (s % "/" % s) upstream main] mempty
+      procs
+        "git"
+        ["branch", "-f", main, format (s % "/" % s) upstream main]
+        mempty
       procs "git" ["push", "-f", origin, main] mempty
 
     whenJust (asum [checkoutBranch, currentBranch]) \v ->
@@ -80,8 +87,8 @@ type CurrentBranch = Maybe Text
 
 type Branches = [Text]
 
-getBranches :: (Text -> Bool) -> Shell (Branches, CurrentBranch)
-getBranches skipByName = do
+getBranches :: (Text -> Bool) -> Text -> Shell (Branches, CurrentBranch)
+getBranches skipByName targetUpstream = do
   output <-
     reduce L.list $
       inproc
@@ -104,7 +111,10 @@ getBranches skipByName = do
           { branchInfoName = name,
             branchInfoUpstream = upstream
           } =
-          not (skipByName name) && isJust upstream
+          let upstreamMatches = fromMaybe False $ do
+                upstreamName <- uiName <$> upstream
+                pure $ upstreamName == targetUpstream
+           in not (skipByName name) && upstreamMatches
 
       branches = parseLine <$> output
 
