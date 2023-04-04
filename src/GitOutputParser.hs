@@ -1,6 +1,6 @@
 module GitOutputParser
   ( branchInfoParser,
-    BranchInfo,
+    BranchInfo (..),
     UpstreamInfo (UpstreamInfo, uiName, uiAhead, uiBehind),
   )
 where
@@ -20,7 +20,12 @@ data UpstreamInfo = UpstreamInfo
   }
   deriving (Eq, Show)
 
-type BranchInfo = (Bool, Text, Text, Maybe UpstreamInfo)
+data BranchInfo = BranchInfo
+  { branchInfoIsCurrent :: !Bool,
+    branchInfoName :: !Text,
+    branchInfoHash :: !Text,
+    branchInfoUpstream :: !(Maybe UpstreamInfo)
+  }
 
 branchInfoParser :: Parser BranchInfo
 branchInfoParser = do
@@ -57,4 +62,4 @@ branchInfoParser = do
   hash <- nonWs
   space *> spaces
   upstream <- optionMaybe $ P.try upstreamInfo
-  return (isCurrent, T.pack name, T.pack hash, upstream)
+  return $ BranchInfo isCurrent (T.pack name) (T.pack hash) upstream

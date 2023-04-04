@@ -7,7 +7,15 @@ module Run (run) where
 import Control.Foldl qualified as L
 import Control.Monad.Extra (whenJust)
 import Data.Text qualified as T
-import GitOutputParser (BranchInfo, branchInfoParser)
+import GitOutputParser
+  ( BranchInfo
+      ( BranchInfo,
+        branchInfoIsCurrent,
+        branchInfoName,
+        branchInfoUpstream
+      ),
+    branchInfoParser,
+  )
 import Import
 import Options
   ( Options
@@ -91,17 +99,17 @@ getBranches skipByName = do
                 format ("Failed to parse " % w % ": " % w) line err
 
       keepBranches :: BranchInfo -> Bool
-      keepBranches (_, name, _, upstream) =
-        not (skipByName name) && isJust upstream
+      keepBranches
+        BranchInfo
+          { branchInfoName = name,
+            branchInfoUpstream = upstream
+          } =
+          not (skipByName name) && isJust upstream
 
-      getName :: BranchInfo -> Text
-      getName (_, name, _, _) = name
+      branches = parseLine <$> output
 
-      branches = map parseLine output
-
-      branchNames = map getName $ filter keepBranches branches
+      branchNames = branchInfoName <$> filter keepBranches branches
       currentBranch =
-        getName
-          <$> find (\(isCurrent, _, _, _) -> isCurrent) branches
+        branchInfoName <$> find branchInfoIsCurrent branches
 
   pure (branchNames, currentBranch)

@@ -4,21 +4,16 @@
 
 module GitOutputParserSpec (spec) where
 
-import GitOutputParser (UpstreamInfo (UpstreamInfo), branchInfoParser)
+import GitOutputParser
+  ( BranchInfo (BranchInfo),
+    UpstreamInfo (UpstreamInfo),
+    branchInfoParser,
+  )
 import Import
 import Test.Hspec
 import Text.Parsec (runParser)
 
 -- import Test.Hspec.QuickCheck
-
--- Helper to make the expectation lists a bit shorter.
-mkBranchInfo ::
-  Bool ->
-  Text ->
-  Text ->
-  Maybe UpstreamInfo ->
-  (Bool, Text, Text, Maybe UpstreamInfo)
-mkBranchInfo isCurrent name hash upstream = (isCurrent, name, hash, upstream)
 
 spec :: Spec
 spec = do
@@ -64,26 +59,23 @@ spec = do
           actual = fmap (runParser branchInfoParser () "test input") input
           expected =
             [ Right $
-                mkBranchInfo False "branch-a" "361" $
+                BranchInfo False "branch-a" "361" $
                   Just $
                     UpstreamInfo "upstream/master" (Just 1) Nothing,
               Right $
-                mkBranchInfo False "branch-b" "ce09" $
+                BranchInfo False "branch-b" "ce09" $
                   Just $
                     UpstreamInfo "upstream/master" (Just 1) (Just 4),
               Right $
-                mkBranchInfo False "branch-c" "db2" $
+                BranchInfo False "branch-c" "db2" $
                   Just $
                     UpstreamInfo "upstream/master" Nothing Nothing,
               Right $
-                mkBranchInfo True "branch-d" "f2d" $
+                BranchInfo True "branch-d" "f2d" $
                   Just $
                     UpstreamInfo "upstream/master" (Just 11) Nothing,
               Right $
-                mkBranchInfo False "path/branch-e" "13c" Nothing
+                BranchInfo False "path/branch-e" "13c" Nothing
             ]
 
       actual `shouldBe` expected
-
--- it "parses " $ plus2 maxBound `shouldBe` minBound + 1
--- prop "minus 2" $ \i -> plus2 i - 2 `shouldBe` i
