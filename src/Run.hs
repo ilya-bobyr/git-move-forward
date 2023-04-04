@@ -9,36 +9,64 @@ import Control.Monad.Extra (whenJust)
 import Data.Text qualified as T
 import GitOutputParser (BranchInfo, branchInfoParser)
 import Import
+import Options
+  ( Options
+      ( Options,
+        optionsCheckoutBranch,
+        optionsForceMoveMain,
+        optionsMainName,
+        optionsOriginName,
+        optionsUpstreamName
+      ),
+  )
 import RIO.List (find)
 import Text.Parsec (runParser)
-import Turtle (Line, Shell, echo, inproc, lineToText, procs, reduce, sh)
+import Turtle (Line, Shell, inproc, lineToText, procs, reduce, sh)
 import Turtle.Format (format, printf, s, w, (%))
 
-run :: Maybe Text -> RIO App ()
-run workingOn = sh $ moveForward workingOn
+run :: Options -> RIO App ()
+run = sh . moveForward
 
-moveForward :: Maybe Text -> Shell ()
-moveForward workingOn = do
-  let main = "master"
-      origin = "origin"
-      upstream = "upstream"
+moveForward :: Options -> Shell ()
+moveForward
+  Options
+    { optionsMainName = main,
+      optionsOriginName = origin,
+      optionsUpstreamName = upstream,
+      optionsForceMoveMain = forceMoveMain,
+      optionsCheckoutBranch = checkoutBranch
+    } = do
+    (branches, currentBranch) <- getBranches (== main)
 
-  (branches, currentBranch) <- getBranches (== main)
+    printf "git-move-forward: Just blindly rebasing...\n"
+    printf "\n"
 
-  echo "git-move-forward: Just blindly rebasing..."
+    if null branches
+      then printf "=== No branches to update\n"
+      else do
+        printf "=== Going to process these branches: \n"
+        mapM_ (printf ("  " % s % "\n")) branches
+        printf "\n"
 
-  printf "Going to process these branches: \n"
-  mapM_ (printf ("  " % s % "\n")) branches
+    forM_ branches \branch -> do
+      procs "git" ["checkout", branch] mempty
+      procs "git" ["rebase"] mempty
 
-  forM_ branches \branch -> do
-    procs "git" ["checkout", branch] mempty
-    procs "git" ["rebase"] mempty
+    when forceMoveMain $ do
+      printf
+        ("Forcing " % s % "/" % s % " to match " % s % "/" % s % "\n")
+        origin
+        main
+        upstream
+        main
+      -- Entering a detached state, in case we are currently on `main`, before
+      -- we force update it.
+      procs "git" ["checkout", "--detach", main] mempty
+      procs "git" ["branch", "-f", main, format (s % "/" % s) upstream main] mempty
+      procs "git" ["push", "-f", origin, main] mempty
 
-  procs "git" ["branch", "-f", main, format (s % "/" % s) upstream main] mempty
-  procs "git" ["push", "-f", origin, main] mempty
-
-  whenJust (asum [workingOn, currentBranch]) \v ->
-    procs "git" ["checkout", v] mempty
+    whenJust (asum [checkoutBranch, currentBranch]) \v ->
+      procs "git" ["checkout", v] mempty
 
 type CurrentBranch = Maybe Text
 
