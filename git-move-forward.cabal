@@ -1,0 +1,84 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           git-move-forward
+version:        0.1.0.0
+description:    Please see the README on Github at <https://github.com/ilya-bobyr/git-move-forward#readme>
+homepage:       https://github.com/ilya-bobyr/git-move-forward#readme
+bug-reports:    https://github.com/ilya-bobyr/git-move-forward/issues
+author:         Illia Bobyr
+maintainer:     illia.bobyr@gmail.com
+copyright:      2023 Illia Bobyr
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/ilya-bobyr/git-move-forward
+
+library
+  exposed-modules:
+      GitOutputParser
+      Import
+      Run
+      Types
+      Util
+  other-modules:
+      Paths_git_move_forward
+  hs-source-dirs:
+      src
+  default-extensions:
+      ImportQualifiedPost
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.11 && <10
+    , extra
+    , foldl
+    , parsec
+    , rio >=0.1.12.0
+    , text
+    , turtle >=1.5.25
+  default-language: Haskell2010
+
+executable git-move-forward
+  main-is: Main.hs
+  other-modules:
+      Paths_git_move_forward
+  hs-source-dirs:
+      app
+  default-extensions:
+      ImportQualifiedPost
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.11 && <10
+    , git-move-forward
+    , optparse-simple
+    , rio >=0.1.12.0
+  default-language: Haskell2010
+
+test-suite git-move-forward-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      GitOutputParserSpec
+      UtilSpec
+      Paths_git_move_forward
+  hs-source-dirs:
+      test
+  default-extensions:
+      ImportQualifiedPost
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.11 && <10
+    , git-move-forward
+    , hspec
+    , parsec
+    , rio >=0.1.12.0
+  default-language: Haskell2010
