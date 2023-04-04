@@ -2,18 +2,13 @@
 
 module Types
   ( App (..),
-    Options (..),
+    Options,
   )
 where
 
-import RIO (Bool, HasLogFunc, LogFunc, Maybe, Text, lens, logFuncL)
+import Options (Options)
+import RIO (HasLogFunc, LogFunc, lens, logFuncL)
 import RIO.Process (HasProcessContext, ProcessContext, processContextL)
-
--- | Command line arguments
-data Options = Options
-  { optionsVerbose :: !Bool,
-    checkoutBranch :: !(Maybe Text)
-  }
 
 data App = App
   { appLogFunc :: !LogFunc,

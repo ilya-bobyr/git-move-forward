@@ -4,6 +4,11 @@
 module Main (main) where
 
 import Import
+import Options
+  ( Options (Options),
+    optionsCheckoutBranch,
+    optionsVerbose,
+  )
 import Options.Applicative.Simple
   ( empty,
     help,
@@ -15,7 +20,7 @@ import Options.Applicative.Simple
     strArgument,
     switch,
   )
-import qualified Paths_git_move_forward
+import Paths_git_move_forward qualified
 import RIO.Process (mkDefaultProcessContext)
 import Run (run)
 
@@ -51,4 +56,4 @@ main = do
               appProcessContext = pc,
               appOptions = options
             }
-     in runRIO app $ run $ checkoutBranch options
+     in runRIO app $ run $ optionsCheckoutBranch options

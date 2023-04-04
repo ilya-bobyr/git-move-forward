@@ -27,6 +27,7 @@ library
   exposed-modules:
       GitOutputParser
       Import
+      Options
       Run
       Types
       Util
