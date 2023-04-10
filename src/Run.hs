@@ -62,13 +62,18 @@ moveForward
       then printf "=== No branches to update\n"
       else do
         printf "=== Going to process these branches: \n"
-        mapM_ (printf ("  " % s % "\n")) branches
+        forM_ branches $ \branch -> do
+          let name = branchInfoName branch
+          printf ("  " % s % " (upstream \"" % s % "\")\n") name targetUpstream
 
     printf "\n"
 
     forM_ branches \branch -> do
-      procs "git" ["checkout", branch] mempty
+      let name = branchInfoName branch
+      printf ("= Rebasing " % s % "\n") name
+      procs "git" ["checkout", name] mempty
       procs "git" ["rebase"] mempty
+      printf "\n"
 
     when forceMoveMain $ do
       printf
@@ -91,7 +96,7 @@ moveForward
 
 type CurrentBranch = Maybe Text
 
-type Branches = [Text]
+type Branches = [BranchInfo]
 
 getBranches :: (Text -> Bool) -> Text -> Shell (Branches, CurrentBranch)
 getBranches skipByName targetUpstream = do
@@ -111,8 +116,8 @@ getBranches skipByName targetUpstream = do
               T.unpack $
                 format ("Failed to parse " % w % ": " % w) line err
 
-      keepBranches :: BranchInfo -> Bool
-      keepBranches
+      isTarget :: BranchInfo -> Bool
+      isTarget
         BranchInfo
           { branchInfoName = name,
             branchInfoUpstream = upstream
@@ -122,10 +127,10 @@ getBranches skipByName targetUpstream = do
                 pure $ upstreamName == targetUpstream
            in not (skipByName name) && upstreamMatches
 
-      branches = parseLine <$> output
+      allBranches = parseLine <$> output
 
-      branchNames = branchInfoName <$> filter keepBranches branches
+      targetBranches = filter isTarget allBranches
       currentBranch =
-        branchInfoName <$> find branchInfoIsCurrent branches
+        branchInfoName <$> find branchInfoIsCurrent allBranches
 
-  pure (branchNames, currentBranch)
+  pure (targetBranches, currentBranch)
