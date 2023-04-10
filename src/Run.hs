@@ -2,7 +2,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Run (run) where
+module Run
+  ( run,
+
+    -- * Testing *
+    getBranches,
+  )
+where
 
 import Control.Foldl qualified as L
 import Control.Monad.Extra (whenJust)

@@ -30,7 +30,6 @@ library
       Options
       Run
       Types
-      Util
   other-modules:
       Paths_git_move_forward
   hs-source-dirs:
@@ -68,8 +67,8 @@ test-suite git-move-forward-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      GetBranchesSpec
       GitOutputParserSpec
-      UtilSpec
       Paths_git_move_forward
   hs-source-dirs:
       test
