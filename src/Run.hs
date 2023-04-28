@@ -53,19 +53,23 @@ moveForward
     } = do
     let targetUpstream = upstream <> "/" <> main
 
-    (branches, currentBranch) <- getBranches (== main) targetUpstream
+    (branches', currentBranch) <- getBranches (== main) targetUpstream
+
+    -- Process `currentBranch` last, if it is part of the process list.  This
+    -- way it will show up in the log at the very top.
+    let branches = maybeMoveBranchToBack currentBranch branches'
 
     printf "git-move-forward: Just blindly rebasing...\n"
     printf "\n"
 
-    if null branches
-      then printf "=== No branches to update\n"
-      else do
-        printf "=== Going to process these branches: \n"
-        forM_ branches $ \branch -> do
-          let name = branchInfoName branch
-          printf ("  " % s % " (upstream \"" % s % "\")\n") name targetUpstream
+    when (null branches) $ do
+      printf "=== No branches to update\n\n"
+      mzero
 
+    printf "=== Going to process these branches: \n"
+    forM_ branches $ \branch -> do
+      let name = branchInfoName branch
+      printf ("  " % s % " (upstream \"" % s % "\")\n") name targetUpstream
     printf "\n"
 
     forM_ branches \branch -> do
@@ -134,3 +138,14 @@ getBranches skipByName targetUpstream = do
         branchInfoName <$> find branchInfoIsCurrent allBranches
 
   pure (targetBranches, currentBranch)
+
+moveBranchToBack :: Text -> [BranchInfo] -> [BranchInfo]
+moveBranchToBack x xs =
+  let targetBranch = (== x) . branchInfoName
+   in if any targetBranch xs
+        then filter (not . targetBranch) xs ++ filter targetBranch xs
+        else xs
+
+maybeMoveBranchToBack :: Maybe Text -> [BranchInfo] -> [BranchInfo]
+maybeMoveBranchToBack (Just x) xs = moveBranchToBack x xs
+maybeMoveBranchToBack Nothing xs = xs
