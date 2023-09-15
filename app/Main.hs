@@ -15,7 +15,6 @@ import Options.Applicative.Simple
     showDefault,
     simpleOptions,
     simpleVersion,
-    strArgument,
     strOption,
     switch,
     value,
@@ -84,8 +83,12 @@ main = do
                   \ all the branches are rebased."
             )
           <*> optional
-            ( strArgument
-                ( help "If specified, checkout this branch at the end"
+            ( strOption
+                ( long "switch"
+                    <> short 's'
+                    <> help
+                      "If specified, switch to this branch at the end.  If not\
+                      \ specified, keeps currently checkout out branch."
                     <> metavar "BRANCH"
                 )
             )
