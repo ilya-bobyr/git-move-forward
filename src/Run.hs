@@ -14,11 +14,13 @@ import Control.Foldl qualified as L
 import Control.Monad.Extra (whenJust)
 import Data.Text qualified as T
 import GitOutputParser
-  ( BranchInfo
+  ( BranchCheckoutState (InAnotherWorkspace, InCurrentWorkspace, NotCheckedOut),
+    BranchInfo
       ( BranchInfo,
-        branchInfoIsCurrent,
+        branchInfoCheckoutState,
         branchInfoName,
-        branchInfoUpstream
+        branchInfoUpstream,
+        branchInfoWorktree
       ),
     UpstreamInfo (uiName),
     branchInfoParser,
@@ -53,14 +55,24 @@ moveForward
     } = do
     let targetUpstream = upstream <> "/" <> main
 
-    (branches', currentBranch) <- getBranches (== main) targetUpstream
+    relevantBranches <- getBranches (== main) targetUpstream
 
     -- Process `currentBranch` last, if it is part of the process list.  This
     -- way it will show up in the log at the very top.
-    let branches = maybeMoveBranchToBack currentBranch branches'
+    let (branches, ignoredBranches) = prepareBranchWorkOrder relevantBranches
+    let currentBranch = branchInfoName <$> find isCurrent branches
 
     printf "git-move-forward: Just blindly rebasing...\n"
     printf "\n"
+
+    unless (null ignoredBranches) $ do
+      printf
+        "=== WARNING These branches can not be updated.  \
+        \Checked out in another worktree\n\n"
+      forM_ ignoredBranches $ \branch -> do
+        let name = branchInfoName branch
+            worktree = fromMaybe "<unset>" $ branchInfoWorktree branch
+        printf ("  " % s % " worktree: " % s % "\n") name worktree
 
     when (null branches) $ do
       printf "=== No branches to update\n\n"
@@ -75,7 +87,7 @@ moveForward
     forM_ branches \branch -> do
       let name = branchInfoName branch
       printf ("= Rebasing " % s % "\n") name
-      procs "git" ["checkout", name] mempty
+      procs "git" ["switch", name] mempty
       procs "git" ["rebase"] mempty
       printf "\n"
 
@@ -88,26 +100,28 @@ moveForward
         main
       -- Entering a detached state, in case we are currently on `main`, before
       -- we force update it.
-      procs "git" ["checkout", "--detach", main] mempty
+      procs "git" ["switch", "--detach", main] mempty
       procs
         "git"
-        ["branch", "-f", main, format (s % "/" % s) upstream main]
+        ["branch", "--force", main, format (s % "/" % s) upstream main]
         mempty
-      procs "git" ["push", "-f", origin, main] mempty
+      procs "git" ["push", "--force", origin, main] mempty
 
     whenJust (asum [checkoutBranch, currentBranch]) \v ->
-      procs "git" ["checkout", v] mempty
+      procs "git" ["switch", v] mempty
 
-type CurrentBranch = Maybe Text
+isCurrent :: BranchInfo -> Bool
+isCurrent = (== InCurrentWorkspace) . branchInfoCheckoutState
 
 type Branches = [BranchInfo]
 
-getBranches :: (Text -> Bool) -> Text -> Shell (Branches, CurrentBranch)
+getBranches :: (Text -> Bool) -> Text -> Shell Branches
 getBranches skipByName targetUpstream = do
   output <-
-    reduce L.list $
-      inproc
+    reduce L.list
+      $ inproc
         "git"
+        -- Second "--verbose" adds remote branch info, and the worktree path.
         ["branch", "--list", "--no-column", "--verbose", "--verbose"]
         mempty
 
@@ -116,9 +130,9 @@ getBranches skipByName targetUpstream = do
         case runParser branchInfoParser () "git branch" $ lineToText line of
           Right branchInfo -> branchInfo
           Left err ->
-            error $
-              T.unpack $
-                format ("Failed to parse " % w % ": " % w) line err
+            error
+              $ T.unpack
+              $ format ("Failed to parse " % w % ": " % w) line err
 
       isTarget :: BranchInfo -> Bool
       isTarget
@@ -134,18 +148,17 @@ getBranches skipByName targetUpstream = do
       allBranches = parseLine <$> output
 
       targetBranches = filter isTarget allBranches
-      currentBranch =
-        branchInfoName <$> find branchInfoIsCurrent allBranches
 
-  pure (targetBranches, currentBranch)
+  pure targetBranches
 
-moveBranchToBack :: Text -> [BranchInfo] -> [BranchInfo]
-moveBranchToBack x xs =
-  let targetBranch = (== x) . branchInfoName
-   in if any targetBranch xs
-        then filter (not . targetBranch) xs ++ filter targetBranch xs
-        else xs
-
-maybeMoveBranchToBack :: Maybe Text -> [BranchInfo] -> [BranchInfo]
-maybeMoveBranchToBack (Just x) xs = moveBranchToBack x xs
-maybeMoveBranchToBack Nothing xs = xs
+-- Splits branches that are checked out in other workspaces into the second
+-- list.  They can not be modified in the current workspace.
+-- Puts branch currently checkout in this workspace to be the last in the first
+-- list.  This way it would be updated last, and will show up first in the `git
+-- log` output.
+prepareBranchWorkOrder :: [BranchInfo] -> ([BranchInfo], [BranchInfo])
+prepareBranchWorkOrder branches =
+  ( filter ((== NotCheckedOut) . branchInfoCheckoutState) branches
+      ++ filter ((== InCurrentWorkspace) . branchInfoCheckoutState) branches,
+    filter ((== InAnotherWorkspace) . branchInfoCheckoutState) branches
+  )
