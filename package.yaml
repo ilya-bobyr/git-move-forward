@@ -24,7 +24,12 @@ dependencies:
 - rio >= 0.1.12.0
 
 default-extensions:
+  - BlockArguments
   - ImportQualifiedPost
+  - NamedFieldPuns
+  - NoImplicitPrelude
+  - OverloadedStrings
+
 
 ghc-options:
 - -Wall
