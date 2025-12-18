@@ -1,5 +1,5 @@
 name:                git-move-forward
-version:             0.1.0.0
+version:             0.1.1.0
 github:              ilya-bobyr/git-move-forward
 license:             BSD3
 author:              Illia Bobyr
@@ -45,8 +45,11 @@ ghc-options:
 library:
   source-dirs: src
   dependencies:
+  - data-default
   - extra
   - foldl
+  - optparse-applicative
+  - optparse-simple
   - parsec
   - text
   - turtle >= 1.5.25
@@ -56,8 +59,12 @@ executables:
     main:                Main.hs
     source-dirs:         app
     dependencies:
+    - data-default
+    - foldl
     - git-move-forward
     - optparse-simple
+    - parsec
+    - turtle >= 1.5.25
 
     ghc-options:
     - -threaded
@@ -69,6 +76,7 @@ tests:
     main:                Spec.hs
     source-dirs:         test
     dependencies:
+    - data-default
     - git-move-forward
     - hspec
     - parsec

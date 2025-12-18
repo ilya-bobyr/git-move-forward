@@ -1,11 +1,11 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.1.
+-- This file has been generated from package.yaml by hpack version 0.38.1.
 --
 -- see: https://github.com/sol/hpack
 
 name:           git-move-forward
-version:        0.1.0.0
+version:        0.1.1.0
 description:    Please see the README on Github at <https://github.com/ilya-bobyr/git-move-forward#readme>
 homepage:       https://github.com/ilya-bobyr/git-move-forward#readme
 bug-reports:    https://github.com/ilya-bobyr/git-move-forward/issues
@@ -25,6 +25,7 @@ source-repository head
 
 library
   exposed-modules:
+      Config
       GitOutputParser
       Import
       Options
@@ -43,8 +44,11 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.11 && <10
+    , data-default
     , extra
     , foldl
+    , optparse-applicative
+    , optparse-simple
     , parsec
     , rio >=0.1.12.0
     , text
@@ -58,29 +62,43 @@ executable git-move-forward
   hs-source-dirs:
       app
   default-extensions:
+      BlockArguments
       ImportQualifiedPost
+      NamedFieldPuns
+      NoImplicitPrelude
+      OverloadedStrings
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.11 && <10
+    , data-default
+    , foldl
     , git-move-forward
     , optparse-simple
+    , parsec
     , rio >=0.1.12.0
+    , turtle >=1.5.25
   default-language: Haskell2010
 
 test-suite git-move-forward-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      ConfigParserSpec
       GetBranchesSpec
       GitOutputParserSpec
       Paths_git_move_forward
   hs-source-dirs:
       test
   default-extensions:
+      BlockArguments
       ImportQualifiedPost
+      NamedFieldPuns
+      NoImplicitPrelude
+      OverloadedStrings
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base >=4.11 && <10
+    , data-default
     , git-move-forward
     , hspec
     , parsec

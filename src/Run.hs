@@ -6,6 +6,16 @@ module Run
   )
 where
 
+import Config
+  ( Config
+      ( Config,
+        configCheckoutBranch,
+        configForceMoveMain,
+        configMainName,
+        configOriginName,
+        configUpstreamName
+      ),
+  )
 import Control.Foldl qualified as L
 import Control.Monad.Extra (whenJust)
 import Data.Text qualified as T
@@ -22,32 +32,22 @@ import GitOutputParser
     branchInfoParser,
   )
 import Import
-import Options
-  ( Options
-      ( Options,
-        optionsCheckoutBranch,
-        optionsForceMoveMain,
-        optionsMainName,
-        optionsOriginName,
-        optionsUpstreamName
-      ),
-  )
 import RIO.List (find)
 import Text.Parsec (runParser)
 import Turtle (Line, Shell, inproc, lineToText, procs, reduce, sh)
 import Turtle.Format (format, printf, s, w, (%))
 
-run :: Options -> RIO App ()
+run :: Config -> RIO App ()
 run = sh . moveForward
 
-moveForward :: Options -> Shell ()
+moveForward :: Config -> Shell ()
 moveForward
-  Options
-    { optionsMainName = main,
-      optionsOriginName = origin,
-      optionsUpstreamName = upstream,
-      optionsForceMoveMain = forceMoveMain,
-      optionsCheckoutBranch = checkoutBranch
+  Config
+    { configMainName = main,
+      configOriginName = origin,
+      configUpstreamName = upstream,
+      configForceMoveMain = forceMoveMain,
+      configCheckoutBranch = checkoutBranch
     } = do
     let targetUpstream = upstream <> "/" <> main
 
@@ -114,8 +114,8 @@ type Branches = [BranchInfo]
 getBranches :: (Text -> Bool) -> Text -> Shell Branches
 getBranches skipByName targetUpstream = do
   output <-
-    reduce L.list
-      $ inproc
+    reduce L.list $
+      inproc
         "git"
         -- Second "--verbose" adds remote branch info, and the worktree path.
         ["branch", "--list", "--no-column", "--verbose", "--verbose"]
@@ -126,9 +126,9 @@ getBranches skipByName targetUpstream = do
         case runParser branchInfoParser () "git branch" $ lineToText line of
           Right branchInfo -> branchInfo
           Left err ->
-            error
-              $ T.unpack
-              $ format ("Failed to parse " % w % ": " % w) line err
+            error $
+              T.unpack $
+                format ("Failed to parse " % w % ": " % w) line err
 
       isTarget :: BranchInfo -> Bool
       isTarget

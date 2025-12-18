@@ -51,3 +51,27 @@ Available options:
 
 Under normal circumstances, `git move-forward` (when `git-move-forward` is in
 `$PATH`) should be enough.
+
+You can put configuration into your git config file, often located at
+`~/.config/git/config` (see `git help config`).  All the command line arguments
+are accepted as configuration options in the `move-forward` section.
+
+So you can say something like:
+
+```gitconfig
+[move-forward]
+    origin = other-origin
+    upstream = project-a
+
+    force-move-main = false
+```
+
+Note that git configuration can also be repository local.  So you add the same
+section into your `.git/config` files in a specific repository as well.
+
+You can see your combined `move-forward` configuration for a given repository by
+running:
+
+```bash
+git config get --show-names --all --regex 'move-forward\..*'
+```

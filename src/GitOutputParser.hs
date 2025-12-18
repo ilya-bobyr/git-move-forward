@@ -94,4 +94,11 @@ branchInfoParser = do
       space *> spaces
       upstreamInfo
   spaces
-  return $ BranchInfo checkout (T.pack name) (T.pack hash) worktree upstream
+
+  return $
+    BranchInfo
+      checkout
+      (T.pack name)
+      (T.pack hash)
+      worktree
+      upstream

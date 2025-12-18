@@ -1,17 +1,17 @@
 module Types
   ( App (..),
-    Options,
+    Config,
   )
 where
 
-import Options (Options)
+import Config (Config)
 import RIO (HasLogFunc, LogFunc, lens, logFuncL)
 import RIO.Process (HasProcessContext, ProcessContext, processContextL)
 
 data App = App
   { appLogFunc :: !LogFunc,
     appProcessContext :: !ProcessContext,
-    appOptions :: !Options
+    appConfig :: !Config
     -- Add other app-specific configuration information here
   }
 

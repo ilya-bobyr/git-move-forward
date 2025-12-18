@@ -19,11 +19,11 @@ spec = do
       let input = ""
           actual = runParser branchInfoParser () "test input" input
 
-          -- TODO An alternative to using text, we can use structured error.
-          -- And it actually produces a nicer mismatch message.  But the problem
-          -- is that the error structure depends on the grammar structure.  On
-          -- one hand, it is expected, but it is not ideal as a test expectation
-          -- expression.
+          -- TODO As an alternative to using text errors, we can use structured
+          -- errors.  And it actually produces a nicer mismatch message.  But
+          -- the problem is that the error structure depends on the grammar
+          -- structure.  On one hand, it is expected, but it is not ideal as a
+          -- test expectation expression.
           --
           -- expected =
           --   foldl'
@@ -56,51 +56,51 @@ spec = do
             ]
           actual = fmap (runParser branchInfoParser () "test input") input
           expected =
-            [ Right
-                $ BranchInfo
+            [ Right $
+                BranchInfo
                   NotCheckedOut
                   "branch-a"
                   "361"
                   Nothing
-                  ( Just
-                      $ UpstreamInfo "upstream/master" (Just 1) Nothing
+                  ( Just $
+                      UpstreamInfo "upstream/master" (Just 1) Nothing
                   ),
-              Right
-                $ BranchInfo
+              Right $
+                BranchInfo
                   InAnotherWorkspace
                   "branch-b"
                   "ce09"
                   (Just "/some/path")
-                  ( Just
-                      $ UpstreamInfo "upstream/master" (Just 1) (Just 4)
+                  ( Just $
+                      UpstreamInfo "upstream/master" (Just 1) (Just 4)
                   ),
-              Right
-                $ BranchInfo
+              Right $
+                BranchInfo
                   NotCheckedOut
                   "branch-c"
                   "db2"
                   Nothing
-                  ( Just
-                      $ UpstreamInfo "upstream/master" Nothing Nothing
+                  ( Just $
+                      UpstreamInfo "upstream/master" Nothing Nothing
                   ),
-              Right
-                $ BranchInfo
+              Right $
+                BranchInfo
                   InCurrentWorkspace
                   "branch-d"
                   "f2d"
                   Nothing
-                  ( Just
-                      $ UpstreamInfo "upstream/master" (Just 11) Nothing
+                  ( Just $
+                      UpstreamInfo "upstream/master" (Just 11) Nothing
                   ),
-              Right
-                $ BranchInfo
+              Right $
+                BranchInfo
                   InAnotherWorkspace
                   "branch-e"
                   "d133"
                   (Just "/another/path")
                   Nothing,
-              Right
-                $ BranchInfo NotCheckedOut "path/branch-e" "13c" Nothing Nothing
+              Right $
+                BranchInfo NotCheckedOut "path/branch-e" "13c" Nothing Nothing
             ]
 
       actual `shouldBe` expected
