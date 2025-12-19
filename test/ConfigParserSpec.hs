@@ -1,8 +1,10 @@
 module ConfigParserSpec (spec) where
 
 import Config
-  ( Config
-      ( configCheckoutBranch,
+  ( BranchConfig (BranchConfig, branchConfigSkip),
+    Config
+      ( configBranches,
+        configCheckoutBranch,
         configForceMoveMain,
         configMainName,
         configOriginName,
@@ -12,6 +14,7 @@ import Config
     configParser,
   )
 import Data.Default (def)
+import Data.Map.Strict qualified as M
 import Import
 import Test.Hspec
 import Text.Parsec (runParser)
@@ -71,3 +74,23 @@ spec = do
     it "can parse \"force-move-main\" option \"no\"" $ do
       checkParsing "move-forward.force-move-main no" $
         def {configForceMoveMain = False}
+
+    it "can parse \"branch.name.skip\" option \"yes\"" $ do
+      checkParsing "move-forward.branch.name.skip yes" $
+        def
+          { configBranches =
+              M.fromList
+                [ ("name", BranchConfig {branchConfigSkip = True})
+                ]
+          }
+
+    it "can parse \"branch.name-with.dots.and-dashes.skip\" option \"no\"" $ do
+      checkParsing "move-forward.branch.name-with.dots.and-dashes.skip no" $
+        def
+          { configBranches =
+              M.fromList
+                [ ( "name-with.dots.and-dashes",
+                    BranchConfig {branchConfigSkip = False}
+                  )
+                ]
+          }

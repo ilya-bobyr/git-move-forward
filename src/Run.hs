@@ -7,17 +7,21 @@ module Run
 where
 
 import Config
-  ( Config
+  ( BranchConfig (branchConfigSkip),
+    Config
       ( Config,
+        configBranches,
         configCheckoutBranch,
         configForceMoveMain,
         configMainName,
         configOriginName,
         configUpstreamName
       ),
+    ConfigBranches,
   )
 import Control.Foldl qualified as L
 import Control.Monad.Extra (whenJust)
+import Data.Map.Strict qualified as M
 import Data.Text qualified as T
 import GitOutputParser
   ( BranchCheckoutState (InAnotherWorkspace, InCurrentWorkspace, NotCheckedOut),
@@ -47,7 +51,8 @@ moveForward
       configOriginName = origin,
       configUpstreamName = upstream,
       configForceMoveMain = forceMoveMain,
-      configCheckoutBranch = checkoutBranch
+      configCheckoutBranch = checkoutBranch,
+      configBranches
     } = do
     let targetUpstream = upstream <> "/" <> main
 
@@ -55,11 +60,19 @@ moveForward
 
     -- Process `currentBranch` last, if it is part of the process list.  This
     -- way it will show up in the log at the very top.
-    let (branches, ignoredBranches) = prepareBranchWorkOrder relevantBranches
+    let (branches, skippedBranches, ignoredBranches) =
+          prepareBranchWorkOrder configBranches relevantBranches
     let currentBranch = branchInfoName <$> find isCurrent branches
 
     printf "git-move-forward: Just blindly rebasing...\n"
     printf "\n"
+
+    unless (null skippedBranches) $ do
+      printf
+        "=== Branches marked as skipped in the configuration:\n"
+      forM_ skippedBranches $ \branch -> do
+        let name = branchInfoName branch
+        printf ("  " % s % "\n") name
 
     unless (null ignoredBranches) $ do
       printf
@@ -152,9 +165,24 @@ getBranches skipByName targetUpstream = do
 -- Puts branch currently checkout in this workspace to be the last in the first
 -- list.  This way it would be updated last, and will show up first in the `git
 -- log` output.
-prepareBranchWorkOrder :: [BranchInfo] -> ([BranchInfo], [BranchInfo])
-prepareBranchWorkOrder branches =
-  ( filter ((== NotCheckedOut) . branchInfoCheckoutState) branches
-      ++ filter ((== InCurrentWorkspace) . branchInfoCheckoutState) branches,
-    filter ((== InAnotherWorkspace) . branchInfoCheckoutState) branches
-  )
+prepareBranchWorkOrder ::
+  ConfigBranches ->
+  [BranchInfo] ->
+  ([BranchInfo], [BranchInfo], [BranchInfo])
+prepareBranchWorkOrder configBranches branches =
+  let skipBranch :: Text -> Bool
+      skipBranch name =
+        maybe False branchConfigSkip $ M.lookup name configBranches
+
+      skippedBranches = filter (skipBranch . branchInfoName) branches
+      branches' = filter (not . skipBranch . branchInfoName) branches
+
+      notCheckedOut = (== NotCheckedOut) . branchInfoCheckoutState
+      inCurrentWorkspace = (== InCurrentWorkspace) . branchInfoCheckoutState
+      inOtherWorkspace = (== InAnotherWorkspace) . branchInfoCheckoutState
+
+      thisWorkspace =
+        filter notCheckedOut branches'
+          ++ filter inCurrentWorkspace branches'
+      otherWorkspace = filter inOtherWorkspace branches'
+   in (thisWorkspace, skippedBranches, otherWorkspace)

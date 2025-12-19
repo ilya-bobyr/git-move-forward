@@ -75,3 +75,26 @@ running:
 ```bash
 git config get --show-names --all --regex 'move-forward\..*'
 ```
+
+## Configuration
+
+### Skipping branches
+
+If you want to skip a branch, add a `skip` key for it, running the following in
+the repository directory:
+
+```bash
+git config set --local 'move-forward.branch.pr/still-has-conflicts.skip' yes
+```
+
+You can see all the branches you have marked for skipping by running:
+
+```bash
+git config get --show-names --all --regex 'move-forward\.branch\..*\.skip'
+```
+
+And you can remove the skip marker by running:
+
+```bash
+git config unset --local 'move-forward.branch.pr/still-has-conflicts.skip'
+```
